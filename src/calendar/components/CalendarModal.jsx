@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { addHours, differenceInSeconds } from 'date-fns';
 
 import Swal from 'sweetalert2';
@@ -7,6 +7,8 @@ import Modal from 'react-modal'
 import DatePicker, { registerLocale } from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { es } from 'date-fns/locale/es';
+
+import { useUiStore, useCalendarStore } from '../../hooks'
 
 registerLocale( 'es', es )
 
@@ -27,12 +29,13 @@ Modal.setAppElement('#root');
 
 export const CalendarModal = () => {
 
-    const [ isOpen, setIsOpen ] = useState( true )
+    const { activeEvent } = useCalendarStore()
+    const { isDateModalOpen, closeDateModal } = useUiStore()
     const [ formSubmited, setFormSubmited ] = useState( false )
 
     const [ formValues, setFormValues ] = useState({
-        title: 'Johan',
-        notes: 'Garzon',
+        title: '',
+        notes: '',
         start: new Date(),
         end: addHours( new Date(), 2 ),
     })
@@ -44,6 +47,12 @@ export const CalendarModal = () => {
             ? ''
             : 'is-invalid'
     }, [ formValues.title, formSubmited ])
+
+    useEffect(() => {
+        if ( activeEvent ) {
+            setFormValues({ ...activeEvent })
+        }
+    }, [ activeEvent ])
 
     const onInputChanged = ({ target }) => {
         setFormValues({
@@ -61,7 +70,7 @@ export const CalendarModal = () => {
 
     const onCloseModal = () => {
         console.log('close Modal')
-        setIsOpen( false )
+        closeDateModal()
     }
 
     const onSubmit = ( event ) => {
@@ -77,13 +86,12 @@ export const CalendarModal = () => {
 
         if ( formValues.title.length <= 0 ) return
 
-        console.log( formValues )
         // todo: remover errores en pantalla y cerrar modal
     }
 
     return (
         <Modal
-            isOpen={ isOpen }
+            isOpen={ isDateModalOpen }
             onRequestClose={ onCloseModal }
             style={ customStyles }
             className='modal'
